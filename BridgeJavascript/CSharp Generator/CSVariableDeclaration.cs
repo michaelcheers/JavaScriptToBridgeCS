@@ -10,7 +10,6 @@ namespace BridgeJavascript.CSharp_Generator
     {
         public IEnumerable<VariableDeclarator> value;
         public CSExpression setTo;
-        public bool @static;
 
         public class VariableDeclarator : CSExpression
         {
@@ -23,7 +22,7 @@ namespace BridgeJavascript.CSharp_Generator
 
         public override string GenerateCS()
         {
-            var result = (@static ? "static " : "") + "object ";
+            var result = "object ";
             result += string.Join(", ", value);
             result += " = ";
             result += setTo;

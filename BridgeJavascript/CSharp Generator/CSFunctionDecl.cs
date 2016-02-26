@@ -4,7 +4,7 @@ using System.Text;
 
 namespace BridgeJavascript.CSharp_Generator
 {
-    public class CSFunctionDecl
+    public class CSFunctionDecl : CSClass.Declarable
     {
         public CSFunction function;
         public CSAttribute[] attributes;
@@ -29,6 +29,11 @@ namespace BridgeJavascript.CSharp_Generator
             result.Append(" ");
             result.Append(function.ToString(false, false, false));
             return result.ToString();
+        }
+
+        public override string GenerateCS()
+        {
+            throw new NotImplementedException();
         }
 
         [Flags]

@@ -16,7 +16,16 @@ namespace BridgeJavascript
 
         }
 
-        public CSExpression Translate(Expression value)
+        public CSVariableDeclaration.VariableDeclarator Translate (VariableDeclarator value, CSClass csClassRef)
+        {
+            return new CSVariableDeclaration.VariableDeclarator
+            {
+                id = (CSIdentifier)Translate(value.Id, csClassRef),
+                type = "object"
+            };
+        }
+
+        public CSExpression Translate(Expression value, CSClass csClassRef)
         {
             if (value is Literal)
             {
@@ -28,16 +37,16 @@ namespace BridgeJavascript
                 var expressionBinary = (BinaryExpression)value;
                 return new CSBinaryExpression
                 {
-                    left = Translate(expressionBinary.Left),
-                    right = Translate(expressionBinary.Right),
+                    left = Translate(expressionBinary.Left, csClassRef),
+                    right = Translate(expressionBinary.Right, csClassRef),
                     @operator = expressionBinary.Operator.ToOperatorString()
                 };
             }
             else if (value is CallExpression)
             {
                 var expressionCall = (CallExpression)value;
-                CSExpression callee = Translate(expressionCall.Callee);
-                CSExpression[] arguments = expressionCall.Arguments.ToList().ConvertAll(v => Translate(v)).ToArray();
+                CSExpression callee = Translate(expressionCall.Callee, csClassRef);
+                CSExpression[] arguments = expressionCall.Arguments.ToList().ConvertAll(v => Translate(v, csClassRef)).ToArray();
                 return new CSCallExpression
                 {
                     callee = callee,
@@ -63,7 +72,7 @@ namespace BridgeJavascript
                 else
                     return new CSMemberExpression
                     {
-                        @object = Translate(expressionMember.Object),
+                        @object = Translate(expressionMember.Object, csClassRef),
                         property = memberTable.ContainsKey(((Identifier)expressionMember.Property).Name) ? memberTable[((Identifier)expressionMember.Property).Name] : ((Identifier)expressionMember.Property).Name
                     };
             };
@@ -81,26 +90,26 @@ namespace BridgeJavascript
             {"log", "Log" }
         };
 
-        public CSStatement Translate(Statement value, bool functionNested = false)
+        public CSStatement Translate(Statement value, CSClass csClassRef, bool functionNested = false)
         {
             if (value is ExpressionStatement)
             {
                 var statementExpression = (ExpressionStatement)value;
-                return new CSExpressionStatement(Translate(statementExpression.Expression));
+                return new CSExpressionStatement(Translate(statementExpression.Expression, csClassRef));
             }
             else if (value is ReturnStatement)
             {
                 var statementReturn = (ReturnStatement)value;
-                return new CSReturnStatement(Translate(statementReturn.Argument));
+                return new CSReturnStatement(Translate(statementReturn.Argument, csClassRef));
             }
             else if (value is IfStatement)
             {
                 var statementIf = (IfStatement)value;
-                IEnumerable<CSStatement> consequent = Translate(GetBlockStatement(statementIf.Consequent));
-                CSExpression test = Translate(statementIf.Test);
+                IEnumerable<CSStatement> consequent = Translate(GetBlockStatement(statementIf.Consequent), csClassRef);
+                CSExpression test = Translate(statementIf.Test, csClassRef);
                 IEnumerable<CSStatement> alternate = null;
                 if (statementIf.Alternate != null)
-                    alternate = Translate(GetBlockStatement(statementIf.Alternate));
+                    alternate = Translate(GetBlockStatement(statementIf.Alternate), csClassRef);
                 return new CSIfStatement
                 {
                     alternate = alternate,
@@ -116,14 +125,24 @@ namespace BridgeJavascript
                     id = new CSIdentifier { name = v.Id.Name },
                     type = "object"
                 });
-                var init = Translate(statementVariableDeclaration.Declarations.Last().Init);
 
-                return new CSVariableDeclaration
+                var init = Translate(statementVariableDeclaration.Declarations.Last().Init, csClassRef);
+
+                if (functionNested)
+                    return new CSVariableDeclaration
+                    {
+                        setTo = init,
+                        value = varDeclTrans
+                    };
+                else
                 {
-                    setTo = init,
-                    value = varDeclTrans,
-                    @static = !functionNested
-                };
+                    csClassRef.declarables.Add(new CSStaticVariable
+                    {
+                        value = statementVariableDeclaration.Declarations.ToList().ConvertAll(v => Translate(v, csClassRef)),
+                        setTo = init
+                    });
+                    return new CSEmptyStatement();
+                }
             }
             throw new NotSupportedException();
         }
@@ -160,7 +179,7 @@ namespace BridgeJavascript
             };
             var Program = new CSClass
             {
-                functions = new List<CSFunctionDecl>
+                declarables = new List<CSClass.Declarable>
                 {
                     Init
                 },
@@ -180,21 +199,21 @@ namespace BridgeJavascript
                 if (item is FunctionDeclaration)
                 {
                     var funcDecl = (FunctionDeclaration)item;
-                    Program.functions.Add(Translate(funcDecl));
+                    Program.declarables.Add(Translate(funcDecl, Program));
                 }
                 else
-                    Init.function.blocks.Add(Translate(item));
+                    Init.function.blocks.Add(Translate(item, Program));
             }
             return NameSpace.ToString();
         }
 
-        public CSFunctionDecl Translate(FunctionDeclaration func)
+        public CSFunctionDecl Translate(FunctionDeclaration func, CSClass csClassRef)
         {
             return new CSFunctionDecl
             {
                 function = new CSFunction
                 {
-                    blocks = Translate((func.Body as BlockStatement).Body, true),
+                    blocks = Translate((func.Body as BlockStatement).Body, csClassRef, true),
                     attributes = new List<CSAttribute>(),
                     parameters = func.Parameters.ToList().ConvertAll(v => new CSFunction.Parameter(v.Name, "object"))
                 },
@@ -214,11 +233,11 @@ namespace BridgeJavascript
             return inForeach;
         }
 
-        public List<CSStatement> Translate(IEnumerable<Statement> body, bool functionNested = false)
+        public List<CSStatement> Translate(IEnumerable<Statement> body, CSClass csClassRef, bool functionNested = false)
         {
             List<CSStatement> result = new List<CSStatement>();
             foreach (var item in body)
-                result.Add(Translate(item, functionNested));
+                result.Add(Translate(item, csClassRef, functionNested));
             return result;
         }
     }

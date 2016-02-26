@@ -6,10 +6,18 @@ using System.Threading.Tasks;
 
 namespace BridgeJavascript.CSharp_Generator
 {
-    class CSClass : CSElement
+    public class CSClass : CSElement
     {
-        public List<CSFunctionDecl> functions = new List<CSFunctionDecl>();
+        public abstract class Declarable
+        {
+            public abstract string GenerateCS();
+            public override string ToString() =>
+                GenerateCS();
+        }
+        
         public List<CSAttribute> attributes = new List<CSAttribute>();
+        public List<CSStaticVariable> variables = new List<CSStaticVariable>();
+        public List<Declarable> declarables;
         public string name;
         public CSFunctionDecl.FuncKeywords keyWords;
 
@@ -23,7 +31,7 @@ namespace BridgeJavascript.CSharp_Generator
             result += " class ";
             result += name;
             result += "\n{\n";
-            result += string.Join("\n", functions);
+            result += string.Join("\n", declarables);
             result += "\n}";
             return result;
         }

@@ -44,6 +44,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CSharp Generator\CSEmptyStatement.cs" />
+    <Compile Include="CSharp Generator\CSStaticVariables.cs" />
     <Compile Include="CSharp Generator\CSVariableDeclaration.cs" />
     <Compile Include="Translator.cs" />
     <Compile Include="CSharp Generator\CSAttribute.cs" />
