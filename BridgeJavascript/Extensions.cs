@@ -8,6 +8,39 @@ namespace BridgeJavascript
 {
     static class Extensions
     {
+        public static string ToOperatorString (this Jint.Parser.Ast.AssignmentOperator value)
+        {
+            switch (value)
+            {
+                case Jint.Parser.Ast.AssignmentOperator.Assign:
+                    return "=";
+                case Jint.Parser.Ast.AssignmentOperator.PlusAssign:
+                    return "+=";
+                case Jint.Parser.Ast.AssignmentOperator.MinusAssign:
+                    return "-=";
+                case Jint.Parser.Ast.AssignmentOperator.TimesAssign:
+                    return "*=";
+                case Jint.Parser.Ast.AssignmentOperator.DivideAssign:
+                    return "/=";
+                case Jint.Parser.Ast.AssignmentOperator.ModuloAssign:
+                    return "%=";
+                case Jint.Parser.Ast.AssignmentOperator.BitwiseAndAssign:
+                    return "&=";
+                case Jint.Parser.Ast.AssignmentOperator.BitwiseOrAssign:
+                    return "|=";
+                case Jint.Parser.Ast.AssignmentOperator.BitwiseXOrAssign:
+                    return "^=";
+                case Jint.Parser.Ast.AssignmentOperator.LeftShiftAssign:
+                    return "<<=";
+                case Jint.Parser.Ast.AssignmentOperator.RightShiftAssign:
+                    return ">>=";
+                case Jint.Parser.Ast.AssignmentOperator.UnsignedRightShiftAssign:
+                    break;
+                default:
+                    break;
+            }
+            throw new NotImplementedException();
+        }
         public static string ToOperatorString (this Jint.Parser.Ast.BinaryOperator value)
         {
             switch (value)

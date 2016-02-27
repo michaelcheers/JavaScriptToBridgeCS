@@ -75,7 +75,20 @@ namespace BridgeJavascript
                         @object = Translate(expressionMember.Object, csClassRef),
                         property = memberTable.ContainsKey(((Identifier)expressionMember.Property).Name) ? memberTable[((Identifier)expressionMember.Property).Name] : ((Identifier)expressionMember.Property).Name
                     };
-            };
+            }
+            else if (value is AssignmentExpression)
+            {
+                var expressionAssignment = (AssignmentExpression)value;
+                var left = expressionAssignment.Left;
+                var @operator = expressionAssignment.Operator;
+                var right = expressionAssignment.Right;
+                return new CSAssignmentExpression
+                {
+                    left = Translate(left, csClassRef),
+                    right = Translate(right, csClassRef),
+                    @operator = @operator.ToOperatorString()
+                };
+            }
             throw new NotImplementedException();
         }
 

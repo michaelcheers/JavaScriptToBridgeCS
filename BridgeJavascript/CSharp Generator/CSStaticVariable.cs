@@ -11,7 +11,7 @@
 
         public override string GenerateCS()
         {
-            var result = "public static object "; 
+            var result = "[Name(false)]\npublic static object "; 
             result += string.Join(", ", value);
             result += " = ";
             result += setTo;
