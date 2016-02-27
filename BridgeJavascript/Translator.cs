@@ -117,6 +117,30 @@ namespace BridgeJavascript
                     test = test
                 };
             }
+            else if (value is WhileStatement)
+            {
+                var statementWhile = (WhileStatement)value;
+                IEnumerable<CSStatement> consequent = Translate(GetBlockStatement(statementWhile.Body), csClassRef);
+                CSExpression test = Translate(statementWhile.Test, csClassRef);
+                return new CSWhileStatement
+                {
+                    consequent = consequent,
+                    @do = false,
+                    test = test
+                };
+            }
+            else if (value is DoWhileStatement)
+            {
+                var statementDoWhile = (DoWhileStatement)value;
+                IEnumerable<CSStatement> consequent = Translate(GetBlockStatement(statementDoWhile.Body), csClassRef);
+                CSExpression test = Translate(statementDoWhile.Test, csClassRef);
+                return new CSWhileStatement
+                {
+                    consequent = consequent,
+                    @do = true,
+                    test = test
+                };
+            }
             else if (value is VariableDeclaration)
             {
                 var statementVariableDeclaration = (VariableDeclaration)value;
