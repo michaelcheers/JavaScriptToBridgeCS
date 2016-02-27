@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace BridgeJavascript.CSharp_Generator
 {
@@ -9,7 +10,7 @@ namespace BridgeJavascript.CSharp_Generator
         public CSFunction function;
         public CSAttribute[] attributes;
         public string name;
-        public FuncKeywords keyWords;
+        public FuncKeywords keyWords = FuncKeywords.Static;
         public string returnType;
 
         public override string ToString()
@@ -23,11 +24,12 @@ namespace BridgeJavascript.CSharp_Generator
             result.Append("public ");
             result.Append(keyWords.ToString().ToLower().Replace(',', ' '));
             result.Append(" ");
+            result.Append(function.blocks.TrueForAll(v=>v is CSEmptyStatement) ? "extern " : "");
             result.Append(returnType);
             result.Append(" ");
             result.Append(name);
             result.Append(" ");
-            result.Append(function.ToString(false, false, false));
+            result.Append(function.ToString(false, false, true));
             return result.ToString();
         }
 

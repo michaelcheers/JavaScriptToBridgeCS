@@ -25,9 +25,9 @@ namespace BridgeJavascript.CSharp_Generator
         }
 
         public override string ToString() =>
-            ToString(true, false, true);
+            ToString(true, true);
         
-        public string ToString (bool useLinq, bool usingLinq, bool useCS60)
+        public string ToString (bool useLinq, bool usingLinq = false, bool allowEmptyExtern = false)
         {
             string inForeach = useLinq && parameters.Count == 1 ? "" : "(";
             for (int n = 0; n < parameters.Count; n++)
@@ -39,10 +39,13 @@ namespace BridgeJavascript.CSharp_Generator
                     inForeach += ", ";
             }
             inForeach += useLinq && parameters.Count == 1 ? "" : ")";
+            if (allowEmptyExtern && blocks.TrueForAll(v => v is CSEmptyStatement))
+                return inForeach + ";";
             if (useLinq)
                 inForeach += " => ";
             inForeach += "\n";
-            inForeach += Translator.ToBlockFunction(blocks);
+            if (blocks.TrueForAll(v => v is CSEmptyStatement) && allowEmptyExtern)
+                inForeach += Translator.ToBlockFunction(blocks);
             return inForeach;
         }
     }
