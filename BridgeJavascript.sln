@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BridgeJavascript", "BridgeJ
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleBridgeJavaScript", "ConsoleBridgeJavaScript\ConsoleBridgeJavaScript.csproj", "{CF5B89FB-3DF0-4B82-A441-834B62B2A4F9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BridgeJavascriptTests", "BridgeJavascriptTests\BridgeJavascriptTests.csproj", "{CDCF2929-1434-4FE6-BF69-EBEDA592E6D0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{CF5B89FB-3DF0-4B82-A441-834B62B2A4F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CF5B89FB-3DF0-4B82-A441-834B62B2A4F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CF5B89FB-3DF0-4B82-A441-834B62B2A4F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CDCF2929-1434-4FE6-BF69-EBEDA592E6D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDCF2929-1434-4FE6-BF69-EBEDA592E6D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CDCF2929-1434-4FE6-BF69-EBEDA592E6D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CDCF2929-1434-4FE6-BF69-EBEDA592E6D0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -8,6 +8,26 @@ namespace BridgeJavascript
 {
     static class Extensions
     {
+        public static string ToOperatorString (this Jint.Parser.Ast.LogicalOperator value)
+        {
+            switch (value)
+            {
+                case Jint.Parser.Ast.LogicalOperator.LogicalAnd:
+                    return "&&";
+                case Jint.Parser.Ast.LogicalOperator.LogicalOr:
+                    return "||";
+            }
+            throw new NotImplementedException();
+        }
+        public static string ToJSString (this object value)
+        {
+            if (value is string)
+                return "\"" + value + "\"";
+            else if (value is bool)
+                return value.ToString().ToLower();
+            else
+                return value.ToString();
+        }
         public static string ToOperatorString (this Jint.Parser.Ast.AssignmentOperator value)
         {
             switch (value)

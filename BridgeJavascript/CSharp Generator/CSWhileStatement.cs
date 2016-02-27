@@ -6,16 +6,16 @@ using System.Threading.Tasks;
 
 namespace BridgeJavascript.CSharp_Generator
 {
-    class CSWhileStatement : CSStatement
+    public class CSWhileStatement : CSStatement
     {
         public CSExpression test;
-        public IEnumerable<CSStatement> consequent;
+        public IEnumerable<CSStatement> body;
         public bool @do;
 
-        public override string GenerateCS()
+        public override TabString GenerateCS()
         {
-            var result = @do ? "do\n" : "while (" + test + ")\n";
-            result += Translator.ToBlockFunction(consequent);
+            var result = @do ? "do\n" : "while (" + test + ")\n\t";
+            result += Translator.ToBlockFunction(body);
             if (@do)
                 result += "\nwhile (" + test + ");";
             return result;

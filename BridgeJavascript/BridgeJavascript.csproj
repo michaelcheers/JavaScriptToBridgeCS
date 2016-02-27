@@ -44,11 +44,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CSharp Generator\CSArrayExpression.cs" />
     <Compile Include="CSharp Generator\CSAssignmentExpression.cs" />
     <Compile Include="CSharp Generator\CSEmptyStatement.cs" />
+    <Compile Include="CSharp Generator\CSForStatement.cs" />
+    <Compile Include="CSharp Generator\CSIndexOperator.cs" />
+    <Compile Include="CSharp Generator\CSNewExpression.cs" />
     <Compile Include="CSharp Generator\CSStaticVariable.cs" />
     <Compile Include="CSharp Generator\CSVariableDeclaration.cs" />
     <Compile Include="CSharp Generator\CSWhileStatement.cs" />
+    <Compile Include="CSharp Generator\CSUnaryExpression.cs" />
+    <Compile Include="CSharp Generator\TabString.cs" />
     <Compile Include="Translator.cs" />
     <Compile Include="CSharp Generator\CSAttribute.cs" />
     <Compile Include="CSharp Generator\CSBinaryExpression.cs" />

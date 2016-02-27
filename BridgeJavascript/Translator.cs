@@ -27,10 +27,12 @@ namespace BridgeJavascript
 
         public CSExpression Translate(Expression value, CSClass csClassRef)
         {
+            if (value == null)
+                return new CSLiteral("null");
             if (value is Literal)
             {
                 var expressionLiteral = (Literal)value;
-                return new CSLiteral(expressionLiteral.Raw.Replace('\'', '\"'));
+                return new CSLiteral(expressionLiteral.Value.ToJSString());
             }
             else if (value is BinaryExpression)
             {
@@ -68,7 +70,11 @@ namespace BridgeJavascript
             {
                 var expressionMember = (MemberExpression)value;
                 if (expressionMember.Computed)
-                    throw new NotImplementedException();
+                    return new CSIndexOperator
+                    {
+                        @object = Translate(expressionMember.Object, csClassRef),
+                        property = Translate(expressionMember.Property, csClassRef)
+                    };
                 else
                     return new CSMemberExpression
                     {
@@ -89,21 +95,136 @@ namespace BridgeJavascript
                     @operator = @operator.ToOperatorString()
                 };
             }
+            else if (value is UpdateExpression)
+            {
+                var expressionUpdate = (UpdateExpression)value;
+                switch (expressionUpdate.Operator)
+                {
+                    case UnaryOperator.BitwiseNot:
+                        break;
+                    case UnaryOperator.Void:
+                        break;
+                    case UnaryOperator.TypeOf:
+                        break;
+                    case UnaryOperator.Increment:
+                        return new CSUnaryExpression
+                        {
+                            @operator = "++",
+                            valPos = expressionUpdate.Prefix ? CSUnaryExpression.Position.Right : CSUnaryExpression.Position.Left,
+                            value = Translate(expressionUpdate.Argument, csClassRef)
+                        };
+                    case UnaryOperator.Decrement:
+                        return new CSUnaryExpression
+                        {
+                            @operator = "--",
+                            valPos = expressionUpdate.Prefix ? CSUnaryExpression.Position.Right : CSUnaryExpression.Position.Left,
+                            value = Translate(expressionUpdate.Argument, csClassRef)
+                        };
+                    default:
+                        break;
+                }
+            }
+            else if (value is UnaryExpression)
+            {
+                var expressionUnary = (UnaryExpression)value;
+                switch (expressionUnary.Operator)
+                {
+                    case UnaryOperator.LogicalNot:
+                        return new CSUnaryExpression
+                        {
+                            @operator = "!",
+                            value = Translate(expressionUnary.Argument, csClassRef),
+                            valPos = CSUnaryExpression.Position.Right
+                        };
+                    case UnaryOperator.Plus:
+                        return new CSCallExpression
+                        {
+                            arguments = new CSExpression[] { Translate(expressionUnary.Argument, csClassRef) },
+                            callee = new CSMemberExpression
+                            {
+                                @object = new CSIdentifier
+                                {
+                                    name = "double"
+                                },
+                                property = "Parse"
+                            }
+                        };
+                    case UnaryOperator.Minus:
+                        return new CSUnaryExpression
+                        {
+                            @operator = "-",
+                            value = Translate(expressionUnary.Argument, csClassRef),
+                            valPos = CSUnaryExpression.Position.Right
+                        };
+                    case UnaryOperator.Delete:
+                        return new CSCallExpression
+                        {
+                            arguments = new CSExpression[] { Translate(expressionUnary.Argument, csClassRef) },
+                            callee = new CSMemberExpression
+                            {
+                                @object = new CSIdentifier { name = "Script" },
+                                property = "Delete"
+                            }
+                        };
+                }
+            }
+            else if (value is NewExpression)
+            {
+                var expressionNew = (NewExpression)value;
+                return new CSNewExpression
+                {
+                    callee = Translate(expressionNew.Callee, csClassRef),
+                    arguments = expressionNew.Arguments.ToList().ConvertAll(v => Translate(v, csClassRef)).ToArray()
+                };
+            }
+            else if (value is ArrayExpression)
+            {
+                var expressionArray = (ArrayExpression)value;
+                return new CSArrayExpression
+                {
+                    elements = expressionArray.Elements.ToList().ConvertAll(v => Translate(v, csClassRef)).ToArray()
+                };
+            }
+            else if (value is LogicalExpression)
+            {
+                var expressionLogical = (LogicalExpression)value;
+                return new CSBinaryExpression
+                {
+                    left = Translate(expressionLogical.Left, csClassRef),
+                    right = Translate(expressionLogical.Right, csClassRef),
+                    @operator = expressionLogical.Operator.ToOperatorString()
+                };
+            }
             throw new NotImplementedException();
         }
 
         public Dictionary<string, string> identiferTable = new Dictionary<string, string>
         {
             {"alert", "Global.Alert" },
-            {"console", "Console" }
+            {"console", "Console" },
+            {"Image", "ImageElement" },
+            {"document", "Global.Document" },
+            {"setTimeout", "Global.SetTimeout" }
         };
 
         public Dictionary<string, string> memberTable = new Dictionary<string, string>
         {
-            {"log", "Log" }
+            {"log", "Log" },
+            {"getElementById", "GetElementById" },
+            {"random", "Random" },
+            {"toString", "ToString" }
         };
 
-        public CSStatement Translate(Statement value, CSClass csClassRef, bool functionNested = false)
+        public CSStatement Translate (SyntaxNode value, CSClass csClassRef)
+        {
+            if (value is Statement)
+                return Translate((Statement)value, csClassRef, true);
+            else if (value is Expression)
+                return new CSExpressionStatement(Translate((Expression)value, csClassRef));
+            throw new NotImplementedException(value.GetType() + " is not stopped.");
+        }
+
+        public CSStatement Translate (Statement value, CSClass csClassRef, bool functionNested = false)
         {
             if (value is ExpressionStatement)
             {
@@ -133,27 +254,44 @@ namespace BridgeJavascript
             else if (value is WhileStatement)
             {
                 var statementWhile = (WhileStatement)value;
-                IEnumerable<CSStatement> consequent = Translate(GetBlockStatement(statementWhile.Body), csClassRef);
+                IEnumerable<CSStatement> body = Translate(GetBlockStatement(statementWhile.Body), csClassRef);
                 CSExpression test = Translate(statementWhile.Test, csClassRef);
                 return new CSWhileStatement
                 {
-                    consequent = consequent,
+                    body = body,
                     @do = false,
                     test = test
+                };
+            }
+            else if (value is ForStatement)
+            {
+                var statementFor = (ForStatement)value;
+                var body = Translate(GetBlockStatement(statementFor.Body), csClassRef);
+                var init = Translate(statementFor.Init, csClassRef);
+                var test = Translate(statementFor.Test, csClassRef);
+                var update = Translate(statementFor.Update, csClassRef);
+                return new CSForStatement
+                {
+                    body = body,
+                    init = init,
+                    test = test,
+                    update = update
                 };
             }
             else if (value is DoWhileStatement)
             {
                 var statementDoWhile = (DoWhileStatement)value;
-                IEnumerable<CSStatement> consequent = Translate(GetBlockStatement(statementDoWhile.Body), csClassRef);
+                IEnumerable<CSStatement> body = Translate(GetBlockStatement(statementDoWhile.Body), csClassRef);
                 CSExpression test = Translate(statementDoWhile.Test, csClassRef);
                 return new CSWhileStatement
                 {
-                    consequent = consequent,
+                    body = body,
                     @do = true,
                     test = test
                 };
             }
+            else if (value is EmptyStatement)
+                return new CSEmptyStatement(true);
             else if (value is VariableDeclaration)
             {
                 var statementVariableDeclaration = (VariableDeclaration)value;
@@ -178,7 +316,7 @@ namespace BridgeJavascript
                         value = statementVariableDeclaration.Declarations.ToList().ConvertAll(v => Translate(v, csClassRef)),
                         setTo = init
                     });
-                    return new CSEmptyStatement();
+                    return new CSEmptyStatement(false);
                 }
             }
             throw new NotSupportedException();
@@ -219,6 +357,14 @@ namespace BridgeJavascript
                 declarables = new List<CSClass.Declarable>
                 {
                     Init
+                },
+                attributes = new List<CSAttribute>
+                {
+                    new CSAttribute
+                    {
+                        arguments = new CSExpression[] {new CSLiteral("\"\"") },
+                        callee = new CSIdentifier{name = "GlobalTarget" }
+                    }
                 },
                 name = "Program",
                 keyWords = CSFunctionDecl.FuncKeywords.Static
@@ -263,11 +409,12 @@ namespace BridgeJavascript
 
         public static string ToBlockFunction (IEnumerable<CSStatement> value)
         {
-            string inForeach = "{\n";
+            string inForeach = "{\n\t";
             foreach (var item in value)
                 inForeach += item.GenerateCS() + "\n";
-            inForeach += "}";
-            return inForeach;
+            inForeach = inForeach.Remove(inForeach.Length - 1);
+            inForeach += "\b\n}";
+            return new TabString(inForeach).Value;
         }
 
         public List<CSStatement> Translate(IEnumerable<Statement> body, CSClass csClassRef, bool functionNested = false)

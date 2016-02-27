@@ -16,7 +16,7 @@ namespace BridgeJavascript.CSharp_Generator
             this.value = value;
         }
 
-        public override string GenerateCS() =>
+        public override TabString GenerateCS() =>
             "return " + value + ";";
     }
 }

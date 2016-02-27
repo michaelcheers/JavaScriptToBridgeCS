@@ -5,7 +5,10 @@ namespace BridgeJavascript
 {
     public class CSEmptyStatement : CSStatement
     {
-        public override string GenerateCS() =>
-            "";
+        public CSEmptyStatement (bool semiColon) { this.semiColon = semiColon; }
+
+        public override TabString GenerateCS() =>
+            semiColon ? ";" : "";
+        public bool semiColon;
     }
 }

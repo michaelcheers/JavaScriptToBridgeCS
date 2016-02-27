@@ -8,7 +8,7 @@ namespace BridgeJavascript.CSharp_Generator
 {
     public class CSLiteral : CSExpression
     {
-        string value;
+        public string value;
 
         public CSLiteral(string value)
         {
@@ -16,5 +16,13 @@ namespace BridgeJavascript.CSharp_Generator
         }
 
         public override string GenerateCS() => value;
+
+        public override string Type
+        {
+            get
+            {
+                return value == null ? "object" : ((value == "true" || value == "false") ? "bool" : (value.First() == '\"' ? "string" : "double"));
+            }
+        }
     }
 }

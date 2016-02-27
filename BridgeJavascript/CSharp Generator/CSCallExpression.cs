@@ -13,5 +13,13 @@ namespace BridgeJavascript.CSharp_Generator
 
         public override string GenerateCS() =>
             callee + "(" + string.Join<CSExpression>(", ", arguments) + ")";
+
+        public override string Type
+        {
+            get
+            {
+                return "dynamic";
+            }
+        }
     }
 }

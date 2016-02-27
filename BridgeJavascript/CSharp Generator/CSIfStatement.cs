@@ -12,7 +12,7 @@ namespace BridgeJavascript.CSharp_Generator
         public IEnumerable<CSStatement> consequent;
         public IEnumerable<CSStatement> alternate;
 
-        public override string GenerateCS()
+        public override TabString GenerateCS()
         {
             var result = "if (" + test + ")\n";
             result += Translator.ToBlockFunction(consequent);

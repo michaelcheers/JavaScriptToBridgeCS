@@ -19,7 +19,8 @@ namespace BridgeJavascript.CSharp_Generator
             
             public Parameter (string name, string type)
             {
-
+                this.name = name;
+                this.type = type;
             }
         }
 

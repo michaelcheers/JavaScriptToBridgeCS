@@ -1,22 +1,32 @@
 ﻿using BridgeJavascript;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ConsoleBridgeJavaScript
 {
-    class Program
+    static class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             var translator = new Translator();
             while (true)
             {
-                string value = Console.ReadLine();
-                Console.WriteLine(translator.TranslateCode(value));
+                string value = ReadEndLine();
+                File.WriteAllText("output.cs", translator.TranslateCode(value));
             }
+        }
+
+        public static string ReadEndLine()
+        {
+            string result = "";
+            string val;
+            while ((val = Console.ReadLine()) != "end")
+                result += val + "\n";
+            return result;
         }
     }
 }

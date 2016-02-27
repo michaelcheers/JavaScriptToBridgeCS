@@ -14,5 +14,13 @@ namespace BridgeJavascript.CSharp_Generator
 
         public override string GenerateCS() =>
             left + " " + @operator + " " + right;
+
+        public override string Type
+        {
+            get
+            {
+                return right.Type;
+            }
+        }
     }
 }

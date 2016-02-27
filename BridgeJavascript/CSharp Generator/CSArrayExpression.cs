@@ -6,20 +6,18 @@ using System.Threading.Tasks;
 
 namespace BridgeJavascript.CSharp_Generator
 {
-    class CSBinaryExpression : CSExpression
+    public class CSArrayExpression : CSExpression
     {
-        public string @operator;
-        public CSExpression left;
-        public CSExpression right;
-
         public override string GenerateCS() =>
-            left + " " + @operator + " " + right;
+            "new " + type + "{" + string.Join<CSExpression>(", ", elements) + "}";
+        public CSExpression[] elements;
+        public string type = "object[]";
 
         public override string Type
         {
             get
             {
-                return left.Type == right.Type ? left.Type : base.Type;
+                return type;
             }
         }
     }
