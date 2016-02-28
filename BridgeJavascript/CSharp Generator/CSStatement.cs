@@ -2,7 +2,7 @@
 {
     public abstract class CSStatement
     {
-        public abstract TabString GenerateCS();
+        public abstract string GenerateCS();
         public override string ToString() =>
             GenerateCS();
     }

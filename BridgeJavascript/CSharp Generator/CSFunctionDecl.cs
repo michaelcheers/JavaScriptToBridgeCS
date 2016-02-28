@@ -13,7 +13,7 @@ namespace BridgeJavascript.CSharp_Generator
         public FuncKeywords keyWords = FuncKeywords.Static;
         public string returnType;
 
-        public override string ToString()
+        public override string GenerateCS()
         {
             StringBuilder result = new StringBuilder();
             if (attributes.Length > 0)
@@ -24,18 +24,13 @@ namespace BridgeJavascript.CSharp_Generator
             result.Append("public ");
             result.Append(keyWords.ToString().ToLower().Replace(',', ' '));
             result.Append(" ");
-            result.Append(function.blocks.TrueForAll(v=>v is CSEmptyStatement) ? "extern " : "");
+            result.Append(function.blocks.TrueForAll(v => v is CSEmptyStatement) ? "extern " : "");
             result.Append(returnType);
             result.Append(" ");
             result.Append(name);
             result.Append(" ");
             result.Append(function.ToString(false, false, true));
             return result.ToString();
-        }
-
-        public override string GenerateCS()
-        {
-            throw new NotImplementedException();
         }
 
         [Flags]

@@ -7,7 +7,7 @@ namespace BridgeJavascript
     {
         public CSEmptyStatement (bool semiColon) { this.semiColon = semiColon; }
 
-        public override TabString GenerateCS() =>
+        public override string GenerateCS() =>
             semiColon ? ";" : "";
         public bool semiColon;
     }

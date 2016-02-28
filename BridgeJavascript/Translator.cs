@@ -25,6 +25,20 @@ namespace BridgeJavascript
             };
         }
 
+        public void IfNeccessaryGenerateTemplateFunction (CSClass @class, string name, string templateText, List<CSFunction.Parameter> parameters, CSFunctionDecl.FuncKeywords keyWords, string returnType) =>
+            @class.declarables.Add(new CSFunctionDecl
+            {
+                attributes = new CSAttribute[] { new CSAttribute { callee = new CSIdentifier { name = "Template" }, arguments = new CSExpression[] { new CSLiteral("\"" + templateText + "\"") } } } ,
+                function = new CSFunction
+                {
+                    blocks = new List<CSStatement>(0),
+                    parameters = parameters
+                },
+                keyWords = keyWords,
+                name = name,
+                returnType = returnType
+            });
+
         public CSExpression Translate(Expression value, CSClass csClassRef)
         {
             if (value == null)
@@ -37,6 +51,22 @@ namespace BridgeJavascript
             else if (value is BinaryExpression)
             {
                 var expressionBinary = (BinaryExpression)value;
+                switch (expressionBinary.Operator)
+                {
+                    case BinaryOperator.Equal:
+                    case BinaryOperator.NotEqual:
+                        {
+                            IfNeccessaryGenerateTemplateFunction(csClassRef, expressionBinary.Operator.ToString(), Convert.ToBoolean(expressionBinary.Operator - BinaryOperator.Equal) ? "{0}!={1}" : "{0}=={1}", new List<CSFunction.Parameter> { new CSFunction.Parameter("a", "object"), new CSFunction.Parameter("b", "object") }, CSFunctionDecl.FuncKeywords.Static, "bool");
+
+                            return new CSCallExpression { callee = new CSMemberExpression { @object = new CSIdentifier { name = "Program" }, property = expressionBinary.Operator.ToString() } , arguments = new CSExpression[] { Translate(expressionBinary.Left, csClassRef), Translate(expressionBinary.Right, csClassRef)} };
+                        }
+                    case BinaryOperator.InstanceOf:
+                        break;
+                    case BinaryOperator.In:
+                        break;
+                    default:
+                        break;
+                }
                 return new CSBinaryExpression
                 {
                     left = Translate(expressionBinary.Left, csClassRef),
@@ -397,7 +427,6 @@ namespace BridgeJavascript
                 function = new CSFunction
                 {
                     blocks = Translate((func.Body as BlockStatement).Body, csClassRef, true),
-                    attributes = new List<CSAttribute>(),
                     parameters = func.Parameters.ToList().ConvertAll(v => new CSFunction.Parameter(v.Name, "object"))
                 },
                 attributes = new CSAttribute[0],
@@ -412,9 +441,8 @@ namespace BridgeJavascript
             string inForeach = "{\n\t";
             foreach (var item in value)
                 inForeach += item.GenerateCS() + "\n";
-            inForeach = inForeach.Remove(inForeach.Length - 1);
-            inForeach += "\b\n}";
-            return new TabString(inForeach).Value;
+            inForeach += "\b}";
+           return TabString.Create(inForeach);
         }
 
         public List<CSStatement> Translate(IEnumerable<Statement> body, CSClass csClassRef, bool functionNested = false)

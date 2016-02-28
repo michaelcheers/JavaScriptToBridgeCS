@@ -9,7 +9,6 @@ namespace BridgeJavascript.CSharp_Generator
     public class CSFunction
     {
         public List<CSStatement> blocks = new List<CSStatement>();
-        public List<CSAttribute> attributes = new List<CSAttribute>();
         public List<Parameter> parameters = new List<Parameter>();
 
         public class Parameter
@@ -44,7 +43,6 @@ namespace BridgeJavascript.CSharp_Generator
             if (useLinq)
                 inForeach += " => ";
             inForeach += "\n";
-            if (blocks.TrueForAll(v => v is CSEmptyStatement) && allowEmptyExtern)
                 inForeach += Translator.ToBlockFunction(blocks);
             return inForeach;
         }

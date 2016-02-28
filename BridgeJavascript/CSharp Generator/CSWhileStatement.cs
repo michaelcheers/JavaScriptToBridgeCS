@@ -12,9 +12,9 @@ namespace BridgeJavascript.CSharp_Generator
         public IEnumerable<CSStatement> body;
         public bool @do;
 
-        public override TabString GenerateCS()
+        public override string GenerateCS()
         {
-            var result = @do ? "do\n" : "while (" + test + ")\n\t";
+            var result = @do ? "do\n" : "while (" + test + ")\n";
             result += Translator.ToBlockFunction(body);
             if (@do)
                 result += "\nwhile (" + test + ");";

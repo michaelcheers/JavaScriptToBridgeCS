@@ -13,7 +13,7 @@ namespace BridgeJavascript.CSharp_Generator
         public CSExpression test;
         public CSExpression update;
 
-        public override TabString GenerateCS() =>
+        public override string GenerateCS() =>
             "for (" + init + " " + test + "; " + update + ")\n" + Translator.ToBlockFunction(body);
     }
 }

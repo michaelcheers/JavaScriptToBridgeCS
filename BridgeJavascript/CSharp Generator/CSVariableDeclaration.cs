@@ -20,7 +20,7 @@ namespace BridgeJavascript.CSharp_Generator
                 id.GenerateCS();
         }
 
-        public override TabString GenerateCS()
+        public override string GenerateCS()
         {
             var result = setTo.Type + " ";
             result += string.Join(", ", value);
