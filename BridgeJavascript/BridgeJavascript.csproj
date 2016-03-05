@@ -55,6 +55,7 @@
     <Compile Include="CSharp Generator\CSWhileStatement.cs" />
     <Compile Include="CSharp Generator\CSUnaryExpression.cs" />
     <Compile Include="TabString.cs" />
+    <Compile Include="TemplateObj.cs" />
     <Compile Include="Translator.cs" />
     <Compile Include="CSharp Generator\CSAttribute.cs" />
     <Compile Include="CSharp Generator\CSBinaryExpression.cs" />

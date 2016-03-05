@@ -16,7 +16,7 @@ namespace BridgeJavascript
 
         }
 
-        public CSVariableDeclaration.VariableDeclarator Translate (VariableDeclarator value, CSClass csClassRef)
+        public CSVariableDeclaration.VariableDeclarator Translate(VariableDeclarator value, CSClass csClassRef)
         {
             return new CSVariableDeclaration.VariableDeclarator
             {
@@ -25,19 +25,63 @@ namespace BridgeJavascript
             };
         }
 
-        public void IfNeccessaryGenerateTemplateFunction (CSClass @class, string name, string templateText, List<CSFunction.Parameter> parameters, CSFunctionDecl.FuncKeywords keyWords, string returnType) =>
-            @class.declarables.Add(new CSFunctionDecl
-            {
-                attributes = new CSAttribute[] { new CSAttribute { callee = new CSIdentifier { name = "Template" }, arguments = new CSExpression[] { new CSLiteral("\"" + templateText + "\"") } } } ,
-                function = new CSFunction
+        public void IfNeccessaryGenerateTemplateFunction(CSClass @class, TemplateObj value)
+        {
+            if (!@class.declarables.ConvertAll(v => v is CSFunctionDecl ? (((CSFunctionDecl)v).name == value.name) : false).Contains(true))
+                @class.declarables.Add(new CSFunctionDecl
                 {
-                    blocks = new List<CSStatement>(0),
-                    parameters = parameters
+                    attributes = new CSAttribute[] { new CSAttribute { callee = new CSIdentifier { name = "Template" }, arguments = new CSExpression[] { new CSLiteral("\"" + value.templateText + "\"") } } },
+                    function = new CSFunction
+                    {
+                        blocks = new List<CSStatement>(0),
+                        parameters = value.parameters
+                    },
+                    keyWords = value.keyWords,
+                    name = value.name,
+                    returnType = value.returnType,
+                    genericParameters = value.generics
+                });
+        }
+
+        static Dictionary<BinaryOperator, TemplateObj> binaryTemplates = new Dictionary<BinaryOperator, TemplateObj>
+        {
+            {BinaryOperator.Equal, new TemplateObj
+            {
+                name = "AreEqual",
+                parameters = new List<CSFunction.Parameter>
+                {
+                    new CSFunction.Parameter("a", "object"),
+                    new CSFunction.Parameter("b", "object")
                 },
-                keyWords = keyWords,
-                name = name,
-                returnType = returnType
-            });
+                templateText = "{0} == {1}",
+                returnType = "bool"
+            }
+            },
+            {BinaryOperator.NotEqual, new TemplateObj
+                {
+                    name = "NotEqual",
+                    parameters = new List<CSFunction.Parameter>
+                    {
+                        new CSFunction.Parameter("a", "object"),
+                        new CSFunction.Parameter("b", "object")
+                    },
+                    returnType = "bool",
+                    templateText = "{0} != {1}"
+                }
+            },
+            {BinaryOperator.InstanceOf, new TemplateObj
+            {
+                name = "InstanceOf",
+                parameters = new List<CSFunction.Parameter>
+                {
+                    new CSFunction.Parameter("value", "object")
+                },
+                returnType = "bool",
+                templateText = "{value} instanceof {T}",
+                generics = new string[] {"T"}
+            }
+            }
+        };
 
         public CSExpression Translate(Expression value, CSClass csClassRef)
         {
@@ -55,15 +99,15 @@ namespace BridgeJavascript
                 {
                     case BinaryOperator.Equal:
                     case BinaryOperator.NotEqual:
-                        {
-                            IfNeccessaryGenerateTemplateFunction(csClassRef, expressionBinary.Operator.ToString(), Convert.ToBoolean(expressionBinary.Operator - BinaryOperator.Equal) ? "{0}!={1}" : "{0}=={1}", new List<CSFunction.Parameter> { new CSFunction.Parameter("a", "object"), new CSFunction.Parameter("b", "object") }, CSFunctionDecl.FuncKeywords.Static, "bool");
-
-                            return new CSCallExpression { callee = new CSMemberExpression { @object = new CSIdentifier { name = "Program" }, property = expressionBinary.Operator.ToString() } , arguments = new CSExpression[] { Translate(expressionBinary.Left, csClassRef), Translate(expressionBinary.Right, csClassRef)} };
-                        }
                     case BinaryOperator.InstanceOf:
-                        break;
+                        {
+                            var @object = binaryTemplates[expressionBinary.Operator];
+                            IfNeccessaryGenerateTemplateFunction(csClassRef, @object);
+
+                            return new CSCallExpression { callee = new CSMemberExpression { @object = new CSIdentifier { name = "Program" }, property = @object.name }, arguments = new CSExpression[] { Translate(expressionBinary.Left, csClassRef), Translate(expressionBinary.Right, csClassRef) } };
+                        }
                     case BinaryOperator.In:
-                        break;
+                        throw new ArgumentException("In base not supported.");
                     default:
                         break;
                 }
@@ -245,7 +289,7 @@ namespace BridgeJavascript
             {"toString", "ToString" }
         };
 
-        public CSStatement Translate (SyntaxNode value, CSClass csClassRef)
+        public CSStatement Translate(SyntaxNode value, CSClass csClassRef)
         {
             if (value is Statement)
                 return Translate((Statement)value, csClassRef, true);
@@ -254,7 +298,7 @@ namespace BridgeJavascript
             throw new NotImplementedException(value.GetType() + " is not stopped.");
         }
 
-        public CSStatement Translate (Statement value, CSClass csClassRef, bool functionNested = false)
+        public CSStatement Translate(Statement value, CSClass csClassRef, bool functionNested = false)
         {
             if (value is ExpressionStatement)
             {
@@ -349,10 +393,31 @@ namespace BridgeJavascript
                     return new CSEmptyStatement(false);
                 }
             }
+            else if (value is ForInStatement)
+            {
+                var statementForIn = (ForInStatement)value;
+                string left;
+                if (statementForIn.Left is VariableDeclaration)
+                    left = "var " + ((VariableDeclaration)statementForIn.Left).Declarations.First().Id.Name;
+                else if (statementForIn.Right is Identifier)
+                    left = ((Identifier)statementForIn.Left).Name;
+                IfNeccessaryGenerateTemplateFunction(csClassRef, new TemplateObj
+                {
+                    name = "ForInStatement",
+                    parameters = new List<CSFunction.Parameter>
+                    {
+                        new CSFunction.Parameter("left", "string"),
+                        new CSFunction.Parameter("right", "object"),
+                        new CSFunction.Parameter("body", "Action<string>")
+                    },
+                    returnType = "void",
+                    templateText = "for ({left} in {right})\n{body}()}",
+                });
+            }
             throw new NotSupportedException();
         }
 
-        public static List<Statement> GetBlockStatement (Statement value)
+        public static List<Statement> GetBlockStatement(Statement value)
         {
             if (value is BlockStatement)
                 return ((BlockStatement)value).Body.ToList();
@@ -436,13 +501,13 @@ namespace BridgeJavascript
             };
         }
 
-        public static string ToBlockFunction (IEnumerable<CSStatement> value)
+        public static string ToBlockFunction(IEnumerable<CSStatement> value)
         {
             string inForeach = "{\n\t";
             foreach (var item in value)
                 inForeach += item.GenerateCS() + "\n";
             inForeach += "\b}";
-           return TabString.Create(inForeach);
+            return TabString.Create(inForeach);
         }
 
         public List<CSStatement> Translate(IEnumerable<Statement> body, CSClass csClassRef, bool functionNested = false)

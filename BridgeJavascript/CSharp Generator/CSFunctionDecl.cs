@@ -12,6 +12,7 @@ namespace BridgeJavascript.CSharp_Generator
         public string name;
         public FuncKeywords keyWords = FuncKeywords.Static;
         public string returnType;
+        public string[] genericParameters = new string[] { };
 
         public override string GenerateCS()
         {
