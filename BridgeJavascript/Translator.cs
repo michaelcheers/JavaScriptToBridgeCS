@@ -102,7 +102,7 @@ namespace BridgeJavascript
                     case BinaryOperator.InstanceOf:
                         {
                             var @object = binaryTemplates[expressionBinary.Operator];
-                            IfNeccessaryGenerateTemplateFunction(csClassRef, @object);
+                            IfNeccessaryGenerateTemplateFunction(Program, @object);
 
                             return new CSCallExpression { callee = new CSMemberExpression { @object = new CSIdentifier { name = "Program" }, property = @object.name }, arguments = new CSExpression[] { Translate(expressionBinary.Left, csClassRef), Translate(expressionBinary.Right, csClassRef) } };
                         }
@@ -403,7 +403,7 @@ namespace BridgeJavascript
                     left = ((Identifier)statementForIn.Left).Name;
                 IfNeccessaryGenerateTemplateFunction(csClassRef, new TemplateObj
                 {
-                    name = "ForInStatement",
+                    name = "ForIn",
                     parameters = new List<CSFunction.Parameter>
                     {
                         new CSFunction.Parameter("left", "string"),
@@ -413,8 +413,13 @@ namespace BridgeJavascript
                     returnType = "void",
                     templateText = "for ({left} in {right})\n{body}()}",
                 });
+                return new CSExpressionStatement(new CSMemberExpression
+                {
+                    @object = new CSIdentifier { name = "Program"},
+                    property = "ForIn"
+                });
             }
-            throw new NotSupportedException();
+            throw new NotImplementedException();
         }
 
         public static List<Statement> GetBlockStatement(Statement value)
@@ -424,6 +429,8 @@ namespace BridgeJavascript
             else
                 return new List<Statement> { value };
         }
+
+        CSClass Program;
 
         public string TranslateCode(string code)
         {
@@ -447,7 +454,7 @@ namespace BridgeJavascript
                 keyWords = CSFunctionDecl.FuncKeywords.Static,
                 returnType = "void"
             };
-            var Program = new CSClass
+            Program = new CSClass
             {
                 declarables = new List<CSClass.Declarable>
                 {
