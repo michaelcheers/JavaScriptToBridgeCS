@@ -50,6 +50,7 @@
     <Compile Include="CSharp Generator\CSForStatement.cs" />
     <Compile Include="CSharp Generator\CSIndexOperator.cs" />
     <Compile Include="CSharp Generator\CSNewExpression.cs" />
+    <Compile Include="CSharp Generator\CSObjectExpression.cs" />
     <Compile Include="CSharp Generator\CSStaticVariable.cs" />
     <Compile Include="CSharp Generator\CSVariableDeclaration.cs" />
     <Compile Include="CSharp Generator\CSWhileStatement.cs" />

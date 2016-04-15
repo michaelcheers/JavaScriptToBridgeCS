@@ -8,10 +8,11 @@
     {
         public List<VariableDeclarator> value = new List<VariableDeclarator>();
         public CSExpression setTo;
+        public string type = "object";
 
         public override string GenerateCS()
         {
-            var result = "[Name(false)]\npublic static object "; 
+            var result = "[Name(false)]\npublic static " + type + " "; 
             result += string.Join(", ", value);
             result += " = ";
             result += setTo;

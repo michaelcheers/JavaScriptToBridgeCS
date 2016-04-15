@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BridgeJavascript.CSharp_Generator
 {
-    public class CSFunction
+    public class CSFunction : CSExpression
     {
         public List<CSStatement> blocks = new List<CSStatement>();
         public List<Parameter> parameters = new List<Parameter>();
@@ -22,9 +22,6 @@ namespace BridgeJavascript.CSharp_Generator
                 this.type = type;
             }
         }
-
-        public override string ToString() =>
-            ToString(true, true);
         
         public string ToString (bool useLinq, bool usingLinq = false, bool allowEmptyExtern = false)
         {
@@ -46,5 +43,8 @@ namespace BridgeJavascript.CSharp_Generator
                 inForeach += Translator.ToBlockFunction(blocks);
             return inForeach;
         }
+
+        public override string GenerateCS() =>
+            ToString(true, true);
     }
 }

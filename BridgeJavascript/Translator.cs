@@ -39,7 +39,8 @@ namespace BridgeJavascript
                     keyWords = value.keyWords,
                     name = value.name,
                     returnType = value.returnType,
-                    genericParameters = value.generics
+                    genericParameters = value.generics,
+                    externAble = true
                 });
         }
 
@@ -269,6 +270,14 @@ namespace BridgeJavascript
                     @operator = expressionLogical.Operator.ToOperatorString()
                 };
             }
+            else if (value is ObjectExpression)
+            {
+                var expressionObject = (ObjectExpression)value;
+                return new CSObjectExpression
+                {
+                    value = expressionObject.Properties.ToDictionary(v => v.Key.GetKey(), v => Translate(v.Value, csClassRef))
+                };
+            }
             throw new NotImplementedException();
         }
 
@@ -278,7 +287,8 @@ namespace BridgeJavascript
             {"console", "Console" },
             {"Image", "ImageElement" },
             {"document", "Global.Document" },
-            {"setTimeout", "Global.SetTimeout" }
+            {"setTimeout", "Global.SetTimeout" },
+            {"undefined", "Global.Undefined" }
         };
 
         public Dictionary<string, string> memberTable = new Dictionary<string, string>
@@ -396,11 +406,13 @@ namespace BridgeJavascript
             else if (value is ForInStatement)
             {
                 var statementForIn = (ForInStatement)value;
-                string left;
+                string left = null;
                 if (statementForIn.Left is VariableDeclaration)
                     left = "var " + ((VariableDeclaration)statementForIn.Left).Declarations.First().Id.Name;
                 else if (statementForIn.Right is Identifier)
                     left = ((Identifier)statementForIn.Left).Name;
+                var right = Translate(statementForIn.Right, csClassRef);
+                var body = GetBlockStatement(statementForIn.Body).ConvertAll(v => Translate(v, csClassRef));
                 IfNeccessaryGenerateTemplateFunction(csClassRef, new TemplateObj
                 {
                     name = "ForIn",
@@ -411,16 +423,24 @@ namespace BridgeJavascript
                         new CSFunction.Parameter("body", "Action<string>")
                     },
                     returnType = "void",
-                    templateText = "for ({left} in {right})\n{body}()}",
+                    templateText = "for ({left} in {right})\\n{body}()}",
                 });
-                return new CSExpressionStatement(new CSMemberExpression
-                {
-                    @object = new CSIdentifier { name = "Program"},
-                    property = "ForIn"
-                });
+                return new CSExpressionStatement(
+                   new CSCallExpression
+                   {
+                       callee = new CSMemberExpression
+                       {
+                           @object = new CSIdentifier { name = "Program" },
+                           property = "ForIn"
+                       },
+                       arguments = new CSExpression[] {new CSLiteral ( left), right, new CSFunction { blocks = body, parameters=new List<CSFunction.Parameter> {new CSFunction.Parameter(left.Split(' ').Last(), "string") } }
+                   }
+                   });
             }
             throw new NotImplementedException();
         }
+
+        public delegate string OptionEvent(string question, string[] options);
 
         public static List<Statement> GetBlockStatement(Statement value)
         {
@@ -460,14 +480,7 @@ namespace BridgeJavascript
                 {
                     Init
                 },
-                attributes = new List<CSAttribute>
-                {
-                    new CSAttribute
-                    {
-                        arguments = new CSExpression[] {new CSLiteral("\"\"") },
-                        callee = new CSIdentifier{name = "GlobalTarget" }
-                    }
-                },
+                attributes = new List<CSAttribute>{},
                 name = "Program",
                 keyWords = CSFunctionDecl.FuncKeywords.Static
             };
@@ -477,7 +490,8 @@ namespace BridgeJavascript
                 elements = new List<CSElement>
                 {
                     Program
-                }
+                },
+                @using = new string[] {"Bridge", "Bridge.Html5", "Bridge.Linq", "System", "System.Linq" }
             };
             foreach (var item in parsed.Body)
             {
@@ -512,9 +526,9 @@ namespace BridgeJavascript
         {
             string inForeach = "{\n\t";
             foreach (var item in value)
-                inForeach += item.GenerateCS() + "\n";
+                inForeach += item.GenerateCS() + (item is CSEmptyStatement ? "" : "\n");
             inForeach += "\b}";
-            return TabString.Create(inForeach);
+            return inForeach;
         }
 
         public List<CSStatement> Translate(IEnumerable<Statement> body, CSClass csClassRef, bool functionNested = false)

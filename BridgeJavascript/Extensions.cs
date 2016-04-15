@@ -8,6 +8,18 @@ namespace BridgeJavascript
 {
     static class Extensions
     {
+        public static string ToJSONString<T>(this Dictionary<string, T> value, Converter<T, string> toString)
+        {
+            string result = "{\n\t";
+            foreach (var item in value)
+            {
+                result += item.Key + " = " + toString(item.Value) + ",\n";
+            }
+            result = result.Substring(0, result.Length - 2);
+            result += "\n\b}";
+            return result;
+        }
+
         public static string ToOperatorString (this Jint.Parser.Ast.LogicalOperator value)
         {
             switch (value)

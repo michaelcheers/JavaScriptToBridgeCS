@@ -30,9 +30,9 @@ namespace BridgeJavascript.CSharp_Generator
             result += keyWords.ToString().ToLower().Replace(',', ' ');
             result += " class ";
             result += name;
-            result += "\n{\n";
+            result += "\n{\n\t";
             result += string.Join("\n", declarables);
-            result += "\n}";
+            result += "\n\b}";
             return result;
         }
 

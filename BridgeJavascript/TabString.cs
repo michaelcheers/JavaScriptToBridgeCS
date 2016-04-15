@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace BridgeJavascript
 {
@@ -16,13 +18,18 @@ namespace BridgeJavascript
                     case '\t':
                         {
                             tabs++;
-                            result += '\t';
-                            break;
+                            goto default;
                         }
                     case '\b':
                         {
                             tabs--;
                             result = result.Remove(result.LastIndexOf('\t'), 1);
+                            break;
+                        }
+                    case '\n':
+                        {
+                            result += '\n';
+                            result += new string(Array.ConvertAll(new char[tabs], v => '\t'));
                             break;
                         }
                     default:

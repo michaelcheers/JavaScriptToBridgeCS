@@ -13,11 +13,8 @@ namespace ConsoleBridgeJavaScript
         public static void Main(string[] args)
         {
             var translator = new Translator();
-            while (true)
-            {
                 string value = ReadEndLine();
                 File.WriteAllText("output.cs", translator.TranslateCode(value));
-            }
         }
 
         public static string ReadEndLine()
