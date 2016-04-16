@@ -21,13 +21,13 @@ namespace BridgeJavascript
             return new CSVariableDeclaration.VariableDeclarator
             {
                 id = (CSIdentifier)Translate(value.Id, csClassRef),
-                type = "object"
+                type = "dynamic"
             };
         }
 
         public void IfNeccessaryGenerateTemplateFunction(CSClass @class, TemplateObj value)
         {
-            if (!@class.declarables.ConvertAll(v => v is CSFunctionDecl ? (((CSFunctionDecl)v).name == value.name) : false).Contains(true))
+            if (!@class.declarables.Any((v => v is CSFunctionDecl && (((CSFunctionDecl)v).name == value.name) && Enumerable.SequenceEqual(((CSFunctionDecl)v).function.parameters, value.parameters))))
                 @class.declarables.Add(new CSFunctionDecl
                 {
                     attributes = new CSAttribute[] { new CSAttribute { callee = new CSIdentifier { name = "Template" }, arguments = new CSExpression[] { new CSLiteral("\"" + value.templateText + "\"") } } },
@@ -407,10 +407,14 @@ namespace BridgeJavascript
             {
                 var statementForIn = (ForInStatement)value;
                 string left = null;
+                ForInLeftType type = ForInLeftType.String;
                 if (statementForIn.Left is VariableDeclaration)
-                    left = "var " + ((VariableDeclaration)statementForIn.Left).Declarations.First().Id.Name;
-                else if (statementForIn.Right is Identifier)
-                    left = ((Identifier)statementForIn.Left).Name;
+                    left = "\"" + ((VariableDeclaration)statementForIn.Left).Declarations.First().Id.Name + "\"";
+                else if (statementForIn.Right is Expression)
+                {
+                    type = ForInLeftType.OutString;
+                    left = "out " + Translate((Expression)statementForIn.Left, csClassRef).GenerateCS();
+                }
                 var right = Translate(statementForIn.Right, csClassRef);
                 var body = GetBlockStatement(statementForIn.Body).ConvertAll(v => Translate(v, csClassRef));
                 IfNeccessaryGenerateTemplateFunction(csClassRef, new TemplateObj
@@ -418,12 +422,12 @@ namespace BridgeJavascript
                     name = "ForIn",
                     parameters = new List<CSFunction.Parameter>
                     {
-                        new CSFunction.Parameter("left", "string"),
+                        new CSFunction.Parameter("left", type == ForInLeftType.String ? "string" : "out string"),
                         new CSFunction.Parameter("right", "object"),
                         new CSFunction.Parameter("body", "Action<string>")
                     },
                     returnType = "void",
-                    templateText = "for ({left} in {right})\\n{body}()}",
+                    templateText = type == ForInLeftType.String ? "for (var {left:raw} in {right})\\n{body}({left:raw})" : "for ({left}.v in {right})\\n{body}({left}.v)",
                 });
                 return new CSExpressionStatement(
                    new CSCallExpression
@@ -433,7 +437,7 @@ namespace BridgeJavascript
                            @object = new CSIdentifier { name = "Program" },
                            property = "ForIn"
                        },
-                       arguments = new CSExpression[] {new CSLiteral ( left), right, new CSFunction { blocks = body, parameters=new List<CSFunction.Parameter> {new CSFunction.Parameter(left.Split(' ').Last(), "string") } }
+                       arguments = new CSExpression[] {new CSLiteral ( left), right, new CSFunction { blocks = body, parameters=new List<CSFunction.Parameter> {new CSFunction.Parameter(left.Split(' ').Last().Replace("\"",""), "string") } }
                    }
                    });
             }
@@ -538,5 +542,11 @@ namespace BridgeJavascript
                 result.Add(Translate(item, csClassRef, functionNested));
             return result;
         }
+    }
+
+    internal enum ForInLeftType
+    {
+        OutString,
+        String
     }
 }

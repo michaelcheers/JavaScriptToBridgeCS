@@ -9,6 +9,6 @@ namespace BridgeJavascript.CSharp_Generator
     public class CSAttribute : CSCallExpression
     {
         public override string GenerateCS() =>
-            "[" + base.GenerateCS().Replace("()", "") + "]";
+            "[" + (arguments.Length == 0 ? base.GenerateCS().Replace("()", "") : base.GenerateCS()) + "]";
     }
 }

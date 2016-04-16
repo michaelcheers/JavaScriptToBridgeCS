@@ -10,6 +10,8 @@ namespace BridgeJavascript
     {
         public static string ToJSONString<T>(this Dictionary<string, T> value, Converter<T, string> toString)
         {
+            if (value.Count == 0)
+                return "{}";
             string result = "{\n\t";
             foreach (var item in value)
             {
